@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>AI Game - Snake</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Saira+Extra+Condensed:500,700" rel="stylesheet" type="text/css" />
+        <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,800,800i" rel="stylesheet" type="text/css" />
+        <link href="css/styles.css" rel="stylesheet" />
+
+<style>
+  body {
+    margin: 0;
+    margin-left: 250px;
+    background: #f8f9fa;
+    font-family: 'Muli', sans-serif;
+  }
+
+  #sideNav {
+    width: 250px;
+  }
+
+  .game-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transform: translateX(-20px);
+  }
+
+  canvas {
+    background: #fdfcf7;
+    border: 6px solid #ffc8dd;
+    border-radius: 8px;
+  }
+
+  .controls {
+    margin-top: 15px;
+  }
+
+  h2 {
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+
+<body id="page-top">
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="sideNav">
+    <a class="navbar-brand js-scroll-trigger" href="index.html">
+        <span class="d-block d-lg-none">Lydia Warnick</span>
+        <span class="d-none d-lg-block">
+            <img class="img-fluid img-profile rounded-circle mx-auto mb-2" src="assets/Screen Shot 2025-02-15 at 11.09.22 AM.png" alt="..." />
+        </span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#experience">Experience</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#education">Education</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#skills">Skills</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#interests">Interests</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html#awards">Awards</a></li>
+            <li class="nav-item"><a class="nav-link active" href="aigame.html">AI Game</a></li>
+            <li class="nav-item"><a class="nav-link active" href="scratch.html">London</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Game Section -->
+<div class="game-container">
+  <h2>Score: <span id="score">0</span></h2>
+  <canvas id="game" width="400" height="400"></canvas>
+
+  <div class="controls">
+    <button class="btn btn-success" onclick="startGame()">Play</button>
+    <button class="btn btn-danger" onclick="resetGame()">Replay</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const gridSize = 20;
+const tileCount = 20;
+const speed = 120;
+
+let snake = [];
+let direction = {x: 1, y: 0};
+let nextDirection = {x: 1, y: 0};
+let food = null;
+let score = 0;
+let lastTime = 0;
+let accumulator = 0;
+let running = false;
+
+function startGame() {
+  if (!running) {
+    running = true;
+    requestAnimationFrame(loop);
+  }
+}
+
+function resetGame() {
+  snake = [{x: 10, y: 10}, {x: 9, y: 10}];
+  direction = {x: 1, y: 0};
+  nextDirection = {x: 1, y: 0};
+  food = spawnFood();
+  score = 0;
+  document.getElementById('score').textContent = score;
+  running = false;
+  draw();
+}
+
+function spawnFood() {
+  return {
+    x: Math.floor(Math.random() * tileCount),
+    y: Math.floor(Math.random() * tileCount)
+  };
+}
+
+function loop(timestamp) {
+  if (!running) return;
+
+  if (!lastTime) lastTime = timestamp;
+  const delta = timestamp - lastTime;
+  lastTime = timestamp;
+  accumulator += delta;
+
+  while (accumulator >= speed) {
+    update();
+    accumulator -= speed;
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function update() {
+  direction = nextDirection;
+
+  const head = {
+    x: snake[0].x + direction.x,
+    y: snake[0].y + direction.y
+  };
+
+  if (
+    head.x < 0 || head.y < 0 || head.x >= tileCount || head.y >= tileCount ||
+    snake.some(s => s.x === head.x && s.y === head.y)
+  ) {
+    running = false;
+    alert('Game Over! Score: ' + score);
+    return;
+  }
+
+  snake.unshift(head);
+
+  if (head.x === food.x && head.y === food.y) {
+    score++;
+    document.getElementById('score').textContent = score;
+    food = spawnFood();
+  } else {
+    snake.pop();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // food
+  ctx.fillStyle = '#333';
+  ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+  // snake
+  ctx.fillStyle = '#ff69b4';
+  for (let i = 0; i < snake.length; i++) {
+    const s = snake[i];
+    ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize - 2, gridSize - 2);
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key;
+
+  if (key === 'ArrowUp' && direction.y === 0) nextDirection = {x: 0, y: -1};
+  if (key === 'ArrowDown' && direction.y === 0) nextDirection = {x: 0, y: 1};
+  if (key === 'ArrowLeft' && direction.x === 0) nextDirection = {x: -1, y: 0};
+  if (key === 'ArrowRight' && direction.x === 0) nextDirection = {x: 1, y: 0};
+});
+
+resetGame();
+</script>
+
+</body>
+</html>
